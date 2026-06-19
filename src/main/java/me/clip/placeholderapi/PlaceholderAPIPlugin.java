@@ -60,16 +60,26 @@ public final class PlaceholderAPIPlugin extends JavaPlugin {
     private static PlaceholderAPIPlugin instance;
 
     static {
-        String version = Bukkit.getServer().getBukkitVersion().split("-")[0];
-        String suffix;
-        if (version.chars()
-                .filter(c -> c == '.')
-                .count() == 1) {
-            suffix = "R1";
-            version = 'v' + version.replace('.', '_') + '_' + suffix;
-        } else {
-            int minor = Integer.parseInt(version.split("\\.")[2].charAt(0) + "");
-            version = 'v' + version.replace('.', '_').replace("_" + minor, "") + '_' + "R" + (minor - 1);
+        // The version string here is only used by the deprecated VersionSpecific mechanism and the
+        // bStats "using_spigot" chart. It must NEVER throw — otherwise the entire PlaceholderAPIPlugin
+        // class fails to initialize (ExceptionInInitializerError) and every later call to
+        // PlaceholderAPI.setPlaceholders(...) throws NoClassDefFoundError, breaking Plan, TAB, etc.
+        //
+        // Older code parsed Bukkit#getBukkitVersion() which on forks like Canvas/Folia can embed
+        // non-numeric build suffixes (e.g. "1.21.b821"), causing NumberFormatException on parseInt.
+        // We now prefer Server#getMinecraftVersion() (Paper/Folia 1.20.5+, returns clean "1.21.11")
+        // and fall back to getBukkitVersion() only when getMinecraftVersion() is unavailable.
+        String version;
+        try {
+            version = normalizeServerVersion(resolveMinecraftVersion());
+        } catch (final Throwable throwable) {
+            // Cannot use Msg.warn or Bukkit#getLogger() here — both depend on PlaceholderAPIPlugin
+            // being initialized / Bukkit.server being set, which is not the case during <clinit>.
+            // Use System.err directly so the failure is still visible without risking a second
+            // exception that would re-throw ExceptionInInitializerError.
+            System.err.println("[PlaceholderAPI] Failed to resolve server version; defaulting to 'vunknown_R1'");
+            throwable.printStackTrace(System.err);
+            version = "vunknown_R1";
         }
 
         boolean isSpigot;
@@ -81,6 +91,86 @@ public final class PlaceholderAPIPlugin extends JavaPlugin {
         }
 
         VERSION = new Version(version, isSpigot);
+    }
+
+    /**
+     * Resolves the running Minecraft version string, preferring the clean
+     * {@link org.bukkit.Server#getMinecraftVersion()} (Paper/Folia 1.20.5+, returns e.g. {@code "1.21.11"})
+     * and falling back to {@link org.bukkit.Server#getBukkitVersion()} stripped of its {@code -...} suffix
+     * on older Bukkit/Spigot builds where {@code getMinecraftVersion()} does not exist.
+     *
+     * @return the raw Minecraft version string (e.g. {@code "1.21.11"} or {@code "1.21"})
+     */
+    @NotNull
+    private static String resolveMinecraftVersion() {
+        try {
+            return Bukkit.getServer().getMinecraftVersion();
+        } catch (final NoSuchMethodError | UnknownError ignored) {
+            // Pre-1.20.5 Bukkit/Spigot — fall back to the legacy, messier source.
+            return Bukkit.getServer().getBukkitVersion().split("-")[0];
+        }
+    }
+
+    /**
+     * Normalizes a Minecraft version string (e.g. {@code "1.21.11"} or {@code "1.21"}) into the
+     * legacy NMS-package format expected by deprecated {@link VersionSpecific} expansions
+     * (e.g. {@code "v1_21_R2"}).
+     *
+     * <p>For a two-segment input ({@code "1.21"}) the patch is assumed to be {@code 1}
+     * → {@code "v1_21_R1"}.</p>
+     *
+     * <p>For a three-segment input ({@code "1.21.11"}) the patch number is used as the
+     * {@code R<n>} suffix directly (so {@code "1.21.11"} → {@code "v1_21_R11"}).
+     * Non-numeric patch segments are stripped to their leading digit, and if that fails the
+     * whole segment is treated as {@code 1}.</p>
+     *
+     * @param raw the raw Minecraft version string, never {@code null}
+     * @return a normalized {@code v<major>_<minor>_R<n>} string
+     */
+    @NotNull
+    private static String normalizeServerVersion(@NotNull final String raw) {
+        final String[] parts = raw.split("\\.");
+        if (parts.length < 3) {
+            // e.g. "1.21" → "v1_21_R1"
+            return 'v' + raw.replace('.', '_') + "_R1";
+        }
+
+        final String major = parts[0];
+        final String minor = parts[1];
+        final int patch = parsePatchSegment(parts[2]);
+
+        return "v" + major + '_' + minor + "_R" + patch;
+    }
+
+    /**
+     * Parses the patch segment of a Minecraft version into an {@code R<n>} number.
+     *
+     * <p>Accepts both pure-numeric patches ({@code "11"} → {@code 11}) and fork-augmented
+     * patches that start with a digit ({@code "11b821"} → {@code 11}). If the segment does
+     * not start with a digit (e.g. Canvas' {@code "b821"}), falls back to {@code 1} so the
+     * plugin still loads.</p>
+     *
+     * @param patchSegment the third dot-separated segment of the version string
+     * @return a positive patch number
+     */
+    private static int parsePatchSegment(@NotNull final String patchSegment) {
+        // Pull the leading run of digits out of the segment (handles "11", "11b821", etc.).
+        int end = 0;
+        while (end < patchSegment.length() && Character.isDigit(patchSegment.charAt(end))) {
+            end++;
+        }
+
+        if (end == 0) {
+            // No leading digit (e.g. "b821") — can't infer a patch number, default safely.
+            return 1;
+        }
+
+        try {
+            final int parsed = Integer.parseInt(patchSegment.substring(0, end));
+            return parsed > 0 ? parsed : 1;
+        } catch (final NumberFormatException ignored) {
+            return 1;
+        }
     }
 
     @NotNull
