@@ -194,13 +194,9 @@ public final class LocalExpansionManager implements Listener {
 
             return Optional.of(expansion);
         } catch (LinkageError | NullPointerException ex) {
-            final String reason;
-
-            if (ex instanceof LinkageError) {
-                reason = " (Is a dependency missing?)";
-            } else {
-                reason = " - One of its properties is null which is not allowed!";
-            }
+            final String reason = ex instanceof LinkageError
+                    ? " (Is a dependency missing?)"
+                    : " - One of its properties is null which is not allowed!";
 
             Msg.severe("Failed to load expansion class %s%s", ex, clazz.getSimpleName(), reason);
         }
@@ -228,8 +224,8 @@ public final class LocalExpansionManager implements Listener {
             return false;
         }
 
-        if (expansion instanceof Configurable) {
-            Map<String, Object> defaults = ((Configurable) expansion).getDefaults();
+        if (expansion instanceof Configurable configurable) {
+            Map<String, Object> defaults = configurable.getDefaults();
             String pre = "expansions." + identifier + ".";
             FileConfiguration cfg = plugin.getConfig();
             boolean save = false;
@@ -260,8 +256,7 @@ public final class LocalExpansionManager implements Listener {
             }
         }
 
-        if (expansion instanceof VersionSpecific) {
-            VersionSpecific nms = (VersionSpecific) expansion;
+        if (expansion instanceof VersionSpecific nms) {
             if (!nms.isCompatibleWith(PlaceholderAPIPlugin.getServerVersion())) {
                 Msg.warn("Your server version is incompatible with expansion %s %s",
                         expansion.getIdentifier(), expansion.getVersion());
@@ -288,8 +283,8 @@ public final class LocalExpansionManager implements Listener {
             expansionsLock.unlock();
         }
 
-        if (expansion instanceof Listener) {
-            Bukkit.getPluginManager().registerEvents(((Listener) expansion), plugin);
+        if (expansion instanceof Listener listener) {
+            Bukkit.getPluginManager().registerEvents(listener, plugin);
         }
 
         Msg.info(
@@ -299,8 +294,8 @@ public final class LocalExpansionManager implements Listener {
                 expansion.getVersion()
         );
 
-        if (expansion instanceof Taskable) {
-            ((Taskable) expansion).start();
+        if (expansion instanceof Taskable taskable) {
+            taskable.start();
         }
 
         // Check eCloud for updates only if the expansion is external
@@ -324,16 +319,16 @@ public final class LocalExpansionManager implements Listener {
 
         Bukkit.getPluginManager().callEvent(new ExpansionUnregisterEvent(expansion));
 
-        if (expansion instanceof Listener) {
-            HandlerList.unregisterAll((Listener) expansion);
+        if (expansion instanceof Listener listener) {
+            HandlerList.unregisterAll(listener);
         }
 
-        if (expansion instanceof Taskable) {
-            ((Taskable) expansion).stop();
+        if (expansion instanceof Taskable taskable) {
+            taskable.stop();
         }
 
-        if (expansion instanceof Cacheable) {
-            ((Cacheable) expansion).clear();
+        if (expansion instanceof Cacheable cacheable) {
+            cacheable.clear();
         }
 
         if (plugin.getPlaceholderAPIConfig().isCloudEnabled()) {
@@ -401,7 +396,7 @@ public final class LocalExpansionManager implements Listener {
 
     @NotNull
     public CompletableFuture<@NotNull List<@Nullable Class<? extends PlaceholderExpansion>>> findExpansionsOnDisk() {
-        File[] files = folder.listFiles((dir, name) -> name.endsWith(".jar"));
+        File[] files = folder.listFiles((_, name) -> name.endsWith(".jar"));
         if (files == null) {
             return CompletableFuture.completedFuture(Collections.emptyList());
         }
@@ -451,8 +446,8 @@ public final class LocalExpansionManager implements Listener {
         try {
             return clazz.getDeclaredConstructor().newInstance();
         } catch (final Exception ex) {
-            if (ex.getCause() instanceof LinkageError) {
-                throw ((LinkageError) ex.getCause());
+            if (ex.getCause() instanceof LinkageError cause) {
+                throw cause;
             }
 
             Msg.warn("There was an issue with loading an expansion.");
@@ -464,11 +459,9 @@ public final class LocalExpansionManager implements Listener {
     @EventHandler
     public void onQuit(@NotNull final PlayerQuitEvent event) {
         for (final PlaceholderExpansion expansion : getExpansions()) {
-            if (!(expansion instanceof Cleanable)) {
-                continue;
+            if (expansion instanceof Cleanable cleanable) {
+                cleanable.cleanup(event.getPlayer());
             }
-
-            ((Cleanable) expansion).cleanup(event.getPlayer());
         }
     }
 

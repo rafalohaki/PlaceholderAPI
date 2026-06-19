@@ -59,17 +59,17 @@ public final class CommandECloudDownload extends PlaceholderCommand {
             return;
         }
 
-        if (isBlockedExpansion(params.get(0))) {
+        if (isBlockedExpansion(params.getFirst())) {
             Msg.msg(sender,
                     "&cThis expansion can't be downloaded.");
             return;
         }
 
         final CloudExpansion expansion = plugin.getCloudExpansionManager()
-                .findCloudExpansionByName(params.get(0)).orElse(null);
+                .findCloudExpansionByName(params.getFirst()).orElse(null);
         if (expansion == null) {
             Msg.msg(sender,
-                    "&cFailed to find an expansion named: &f" + params.get(0));
+                    "&cFailed to find an expansion named: &f" + params.getFirst());
             return;
         }
 
@@ -92,7 +92,7 @@ public final class CommandECloudDownload extends PlaceholderCommand {
         }
 
         if (!version.isVerified()) {
-            Msg.msg(sender, "&cThe expansion '&f" + params.get(0) + "&c' is not verified and can only be downloaded manually from &fhttps://ecloud.placeholderapi.com");
+            Msg.msg(sender, "&cThe expansion '&f" + params.getFirst() + "&c' is not verified and can only be downloaded manually from &fhttps://ecloud.placeholderapi.com");
             return;
         }
 
@@ -124,12 +124,12 @@ public final class CommandECloudDownload extends PlaceholderCommand {
         if (params.size() <= 1) {
             final Stream<String> names = plugin.getCloudExpansionManager().getCloudExpansions().values()
                     .stream().map(CloudExpansion::getName).map(name -> name.replace(' ', '_'));
-            suggestByParameter(names, suggestions, params.isEmpty() ? null : params.get(0));
+            suggestByParameter(names, suggestions, params.isEmpty() ? null : params.getFirst());
             return;
         }
 
         final Optional<CloudExpansion> expansion = plugin.getCloudExpansionManager()
-                .findCloudExpansionByName(params.get(0));
+                .findCloudExpansionByName(params.getFirst());
         if (!expansion.isPresent()) {
             return;
         }

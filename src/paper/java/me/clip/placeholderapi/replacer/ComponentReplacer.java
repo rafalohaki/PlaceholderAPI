@@ -24,46 +24,35 @@ public class ComponentReplacer {
 
     @NotNull
     private static Component rebuild(@NotNull final Component component, @NotNull final Function<String, String> replacer, @Nullable final Function<String, Component> deserializer) {
-        Component rebuilt;
-
-        if (component instanceof TextComponent) {
-            final TextComponent text = (TextComponent) component;
-            final String replaced = replacer.apply(text.content());
-
-            rebuilt = deserializer == null ? Component.text(replaced) : deserializer.apply(replaced);
-        } else if (component instanceof TranslatableComponent) {
-            final TranslatableComponent translatable = (TranslatableComponent) component;
-            final List<Component> arguments = new ArrayList<>();
-
-            for (final ComponentLike arg : translatable.arguments()) {
-                arguments.add(rebuild(arg.asComponent(), replacer, deserializer));
+        final Component rebuilt = switch (component) {
+            case TextComponent text -> {
+                final String replaced = replacer.apply(text.content());
+                yield deserializer == null ? Component.text(replaced) : deserializer.apply(replaced);
             }
+            case TranslatableComponent translatable -> {
+                final List<Component> arguments = new ArrayList<>();
+                for (final ComponentLike arg : translatable.arguments()) {
+                    arguments.add(rebuild(arg.asComponent(), replacer, deserializer));
+                }
+                yield Component.translatable(translatable.key(), arguments);
+            }
+            case KeybindComponent keybind -> Component.keybind(keybind.keybind());
+            case ScoreComponent score -> Component.score(score.name(), score.objective());
+            case SelectorComponent selector -> Component.selector(selector.pattern());
+            default -> Component.empty();
+        };
 
-            rebuilt = Component.translatable(translatable.key(), arguments);
-        } else if (component instanceof KeybindComponent) {
-            final KeybindComponent keybind = (KeybindComponent) component;
-            rebuilt = Component.keybind(keybind.keybind());
-        } else if (component instanceof ScoreComponent) {
-            final ScoreComponent score = (ScoreComponent) component;
-            rebuilt = Component.score(score.name(), score.objective());
-        } else if (component instanceof SelectorComponent) {
-            final SelectorComponent selector = (SelectorComponent) component;
-            rebuilt = Component.selector(selector.pattern());
-        } else {
-            rebuilt = Component.empty();
+        final Component styled = rebuilt.style(rebuildStyle(component.style(), replacer, deserializer));
+
+        if (component.children().isEmpty()) {
+            return styled;
         }
 
-        rebuilt = rebuilt.style(rebuildStyle(component.style(), replacer, deserializer));
-
-        if (!component.children().isEmpty()) {
-            final List<Component> children = new ArrayList<>();
-            for (Component child : component.children()) {
-                children.add(rebuild(child, replacer, deserializer));
-            }
-            rebuilt = rebuilt.children(children);
+        final List<Component> children = new ArrayList<>();
+        for (final Component child : component.children()) {
+            children.add(rebuild(child, replacer, deserializer));
         }
-
-        return rebuilt;
+        return styled.children(children);
     }
 
     @NotNull
@@ -86,85 +75,49 @@ public class ComponentReplacer {
 
     @NotNull
     private static ClickEvent rebuildClickEvent(@NotNull final ClickEvent click, @NotNull final Function<String, String> replacer) {
-        final ClickEvent.Payload payload = click.payload();
-
-        if (!(payload instanceof ClickEvent.Payload.Text)) {
+        if (!(click.payload() instanceof ClickEvent.Payload.Text text)) {
             return click;
         }
 
-        final String original = ((ClickEvent.Payload.Text) payload).value();
-        final String replaced = replacer.apply(original);
+        final String replaced = replacer.apply(text.value());
 
-        final ClickEvent.Action action = click.action();
-
-        switch (action) {
-            case OPEN_URL:
-                return ClickEvent.openUrl(replaced);
-            case OPEN_FILE:
-                return ClickEvent.openFile(replaced);
-            case RUN_COMMAND:
-                return ClickEvent.runCommand(replaced);
-            case SUGGEST_COMMAND:
-                return ClickEvent.suggestCommand(replaced);
-            case COPY_TO_CLIPBOARD:
-                return ClickEvent.copyToClipboard(replaced);
-            default:
-                return click;
-        }
+        return switch (click.action()) {
+            case OPEN_URL -> ClickEvent.openUrl(replaced);
+            case OPEN_FILE -> ClickEvent.openFile(replaced);
+            case RUN_COMMAND -> ClickEvent.runCommand(replaced);
+            case SUGGEST_COMMAND -> ClickEvent.suggestCommand(replaced);
+            case COPY_TO_CLIPBOARD -> ClickEvent.copyToClipboard(replaced);
+            default -> click;
+        };
     }
 
     @NotNull
     private static HoverEvent<?> rebuildHoverEvent(@NotNull final HoverEvent<?> hover, @NotNull final Function<String, String> replacer, @Nullable final Function<String, Component> deserializer) {
-        final Object value = hover.value();
-
-        if (value instanceof Component) {
-            final Component rebuilt = rebuild((Component) value, replacer, deserializer);
-            return HoverEvent.showText(rebuilt);
-        }
-
-        if (value instanceof HoverEvent.ShowItem) {
-            return rebuildShowItem((HoverEvent.ShowItem) value, replacer);
-        }
-
-        if (value instanceof HoverEvent.ShowEntity) {
-            final HoverEvent.ShowEntity entity = (HoverEvent.ShowEntity) value;
-
-            Component rebuiltName = null;
-            if (entity.name() != null) {
-                rebuiltName = rebuild(entity.name(), replacer, deserializer);
+        return switch (hover.value()) {
+            case Component value -> HoverEvent.showText(rebuild(value, replacer, deserializer));
+            case HoverEvent.ShowItem item -> rebuildShowItem(item, replacer);
+            case HoverEvent.ShowEntity entity -> {
+                final Component rebuiltName = entity.name() == null ? null : rebuild(entity.name(), replacer, deserializer);
+                yield HoverEvent.showEntity(entity.type(), entity.id(), rebuiltName);
             }
-
-            return HoverEvent.showEntity(entity.type(), entity.id(), rebuiltName);
-        }
-
-        return hover;
+            default -> hover;
+        };
     }
 
     @NotNull
     private static HoverEvent<?> rebuildShowItem(@NotNull final HoverEvent.ShowItem item, @NotNull final Function<String, String> replacer) {
-        final BinaryTagHolder nbt = item.nbt();
-
-        if (nbt != null && !nbt.string().isEmpty()) {
-            final String replaced = replacer.apply(nbt.string());
-
-            return HoverEvent.showItem(item.item(), item.count(), BinaryTagHolder.binaryTagHolder(replaced));
-        }
-
-        //I'm not 100% sure this is how we're meant to support data components but let's give it a go and see if it causes any issues :)
+        // Since Minecraft 1.20.5 item hover events use data components instead of raw NBT.
         final Map<Key, DataComponentValue> components = item.dataComponents();
 
         if (!components.isEmpty()) {
             final Map<Key, DataComponentValue> rebuilt = new HashMap<>();
 
             for (final Map.Entry<Key, DataComponentValue> entry : components.entrySet()) {
-                final DataComponentValue value = entry.getValue();
-
-                if (!(value instanceof BinaryTagHolder)) {
-                    rebuilt.put(entry.getKey(), value);
-                    continue;
+                if (entry.getValue() instanceof BinaryTagHolder holder) {
+                    rebuilt.put(entry.getKey(), BinaryTagHolder.binaryTagHolder(replacer.apply(holder.string())));
+                } else {
+                    rebuilt.put(entry.getKey(), entry.getValue());
                 }
-
-                rebuilt.put(entry.getKey(), BinaryTagHolder.binaryTagHolder(replacer.apply(((BinaryTagHolder) value).string())));
             }
 
             return HoverEvent.showItem(item.item(), item.count(), rebuilt);

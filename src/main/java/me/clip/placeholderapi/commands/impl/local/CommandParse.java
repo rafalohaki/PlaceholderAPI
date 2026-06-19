@@ -31,6 +31,7 @@ import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.commands.PlaceholderCommand;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.clip.placeholderapi.util.Msg;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -96,19 +97,19 @@ public final class CommandParse extends PlaceholderCommand {
 
         OfflinePlayer player;
 
-        if ("me".equalsIgnoreCase(params.get(0))) {
-            if (!(sender instanceof Player)) {
+        if ("me".equalsIgnoreCase(params.getFirst())) {
+            if (!(sender instanceof Player p)) {
                 Msg.msg(sender, "&cYou must be a player to use &7me&c as a target!");
                 return;
             }
 
-            player = ((Player) sender);
-        } else if ("--null".equalsIgnoreCase(params.get(0))) {
+            player = p;
+        } else if ("--null".equalsIgnoreCase(params.getFirst())) {
             player = null;
         } else {
-            final OfflinePlayer target = resolvePlayer(params.get(0));
+            final OfflinePlayer target = resolvePlayer(params.getFirst());
             if (target == null) {
-                Msg.msg(sender, "&cFailed to find player: &7" + params.get(0));
+                Msg.msg(sender, "&cFailed to find player: &7" + params.getFirst());
                 return;
             }
 
@@ -124,7 +125,7 @@ public final class CommandParse extends PlaceholderCommand {
         }
 
         if (broadcast) {
-            Bukkit.broadcastMessage(message);
+            Bukkit.broadcast(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
         } else {
             sender.sendMessage(message);
         }
@@ -141,31 +142,31 @@ public final class CommandParse extends PlaceholderCommand {
 
         OfflinePlayer playerOne;
 
-        if ("me".equalsIgnoreCase(params.get(0))) {
-            if (!(sender instanceof Player)) {
+        if ("me".equalsIgnoreCase(params.getFirst())) {
+            if (!(sender instanceof Player p)) {
                 Msg.msg(sender, "&cYou must be a player to use &7me&c as a target!");
                 return;
             }
 
-            playerOne = ((Player) sender);
+            playerOne = p;
         } else {
-            playerOne = resolvePlayer(params.get(0));
+            playerOne = resolvePlayer(params.getFirst());
         }
 
         if (playerOne == null || !playerOne.isOnline()) {
-            Msg.msg(sender, "&cFailed to find player: &f" + params.get(0));
+            Msg.msg(sender, "&cFailed to find player: &f" + params.getFirst());
             return;
         }
 
         OfflinePlayer playerTwo;
 
         if ("me".equalsIgnoreCase(params.get(1))) {
-            if (!(sender instanceof Player)) {
+            if (!(sender instanceof Player p)) {
                 Msg.msg(sender, "&cYou must be a player to use &7me&c as a target!");
                 return;
             }
 
-            playerTwo = ((Player) sender);
+            playerTwo = p;
         } else {
             playerTwo = resolvePlayer(params.get(1));
         }
@@ -187,16 +188,16 @@ public final class CommandParse extends PlaceholderCommand {
                                        @NotNull @Unmodifiable final List<String> params, @NotNull final List<String> suggestions) {
         if (params.size() <= 1) {
             if (sender instanceof Player && (params.isEmpty() || "me"
-                    .startsWith(params.get(0).toLowerCase(Locale.ROOT)))) {
+                    .startsWith(params.getFirst().toLowerCase(Locale.ROOT)))) {
                 suggestions.add("me");
             }
 
-            if ("--null".startsWith(params.get(0).toLowerCase(Locale.ROOT))) {
+            if ("--null".startsWith(params.getFirst().toLowerCase(Locale.ROOT))) {
                 suggestions.add("--null");
             }
 
             final Stream<String> names = Bukkit.getOnlinePlayers().stream().map(Player::getName);
-            suggestByParameter(names, suggestions, params.isEmpty() ? null : params.get(0));
+            suggestByParameter(names, suggestions, params.isEmpty() ? null : params.getFirst());
 
             return;
         }

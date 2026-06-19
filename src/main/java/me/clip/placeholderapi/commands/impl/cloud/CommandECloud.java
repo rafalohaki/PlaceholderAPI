@@ -99,7 +99,7 @@ public final class CommandECloud extends PlaceholderCommand {
             return;
         }
 
-        final String search = params.get(0).toLowerCase(Locale.ROOT);
+        final String search = params.getFirst().toLowerCase(Locale.ROOT);
         final PlaceholderCommand target = commands.get(search);
 
         if (target == null) {
@@ -133,12 +133,12 @@ public final class CommandECloud extends PlaceholderCommand {
         if (params.size() <= 1) {
             final Stream<String> targets = filterByPermission(sender, commands.values().stream())
                     .map(PlaceholderCommand::getLabels).flatMap(Collection::stream);
-            suggestByParameter(targets, suggestions, params.isEmpty() ? null : params.get(0));
+            suggestByParameter(targets, suggestions, params.isEmpty() ? null : params.getFirst());
 
             return; // send sub commands
         }
 
-        final String search = params.get(0).toLowerCase(Locale.ROOT);
+        final String search = params.getFirst().toLowerCase(Locale.ROOT);
         final PlaceholderCommand target = commands.get(search);
 
         if (target == null) {

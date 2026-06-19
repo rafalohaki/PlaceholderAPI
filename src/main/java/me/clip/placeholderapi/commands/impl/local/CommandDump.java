@@ -37,7 +37,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -93,8 +93,8 @@ public final class CommandDump extends PlaceholderCommand {
     private CompletableFuture<String> postDump(@NotNull final String dump) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                final HttpURLConnection connection = ((HttpURLConnection) new URL(URL + "documents")
-                        .openConnection());
+                final HttpURLConnection connection = ((HttpURLConnection) URI.create(URL + "documents")
+                        .toURL().openConnection());
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "text/plain; charset=utf-8");
                 connection.setDoOutput(true);
@@ -124,7 +124,7 @@ public final class CommandDump extends PlaceholderCommand {
                 .append("\n\n");
 
         builder.append("PlaceholderAPI: ")
-                .append(plugin.getDescription().getVersion())
+                .append(plugin.getPluginMeta().getVersion())
                 .append("\n\n");
 
         builder.append("Expansions Registered:")
@@ -161,7 +161,7 @@ public final class CommandDump extends PlaceholderCommand {
 
         final String[] jars = plugin.getLocalExpansionManager()
                 .getExpansionsFolder()
-                .list((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".jar"));
+                .list((_, name) -> name.toLowerCase(Locale.ROOT).endsWith(".jar"));
 
 
         if (jars == null) {
@@ -201,9 +201,9 @@ public final class CommandDump extends PlaceholderCommand {
             builder.append("  ")
                     .append(String.format("%-" + size + "s", other.getName()))
                     .append(" [Authors: [")
-                    .append(String.join(", ", other.getDescription().getAuthors()))
+                    .append(String.join(", ", other.getPluginMeta().getAuthors()))
                     .append("], Version: ")
-                    .append(other.getDescription().getVersion())
+                    .append(other.getPluginMeta().getVersion())
                     .append("]")
                     .append("\n");
         }

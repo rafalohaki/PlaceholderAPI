@@ -69,14 +69,14 @@ public final class CommandECloudUpdate extends PlaceholderCommand {
             return;
         }
 
-        final boolean multiple = params.get(0).equalsIgnoreCase("all");
+        final boolean multiple = params.getFirst().equalsIgnoreCase("all");
         final List<CloudExpansion> expansions = new ArrayList<>();
 
         // gather target expansions
         if (multiple) {
             expansions.addAll(plugin.getCloudExpansionManager().getCloudExpansionsInstalled().values());
         } else {
-            plugin.getCloudExpansionManager().findCloudExpansionByName(params.get(0))
+            plugin.getCloudExpansionManager().findCloudExpansionByName(params.getFirst())
                     .ifPresent(expansions::add);
         }
 
@@ -131,13 +131,13 @@ public final class CommandECloudUpdate extends PlaceholderCommand {
         installed.removeIf(expansion -> !expansion.shouldUpdate());
 
         if (!installed.isEmpty() && (params.isEmpty() || "all"
-                .startsWith(params.get(0).toLowerCase(Locale.ROOT)))) {
+                .startsWith(params.getFirst().toLowerCase(Locale.ROOT)))) {
             suggestions.add("all");
         }
 
         suggestByParameter(
                 installed.stream().map(CloudExpansion::getName).map(name -> name.replace(" ", "_")),
-                suggestions, params.isEmpty() ? null : params.get(0));
+                suggestions, params.isEmpty() ? null : params.getFirst());
     }
 
 }

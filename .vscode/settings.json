@@ -1,0 +1,10 @@
+{
+    "java.compile.nullAnalysis.mode": "disabled",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-25",
+            "path": "${env:JAVA_HOME}",
+            "default": true
+        }
+    ]
+}

@@ -408,11 +408,9 @@ public abstract class PlaceholderExpansion extends PlaceholderHook {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof PlaceholderExpansion)) {
+        if (!(o instanceof PlaceholderExpansion expansion)) {
             return false;
         }
-
-        final PlaceholderExpansion expansion = (PlaceholderExpansion) o;
 
         return getIdentifier().equals(expansion.getIdentifier()) &&
                 getAuthor().equals(expansion.getAuthor()) &&

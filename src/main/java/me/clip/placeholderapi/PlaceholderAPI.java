@@ -197,11 +197,11 @@ public final class PlaceholderAPI {
             final PlaceholderExpansion expansion = PlaceholderAPIPlugin.getInstance()
                     .getLocalExpansionManager().getExpansion(identifier);
 
-            if (!(expansion instanceof Relational)) {
+            if (!(expansion instanceof Relational rel)) {
                 continue;
             }
 
-            final String value = ((Relational) expansion).onPlaceholderRequest(one, two, params);
+            final String value = rel.onPlaceholderRequest(one, two, params);
 
             if (value != null) {
                 text = text.replaceAll(Pattern.quote(matcher.group()), Matcher.quoteReplacement(value));

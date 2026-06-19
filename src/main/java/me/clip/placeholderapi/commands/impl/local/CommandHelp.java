@@ -26,7 +26,6 @@ import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.commands.PlaceholderCommand;
 import me.clip.placeholderapi.util.Msg;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -41,10 +40,10 @@ public final class CommandHelp extends PlaceholderCommand {
     public void evaluate(@NotNull final PlaceholderAPIPlugin plugin,
                          @NotNull final CommandSender sender, @NotNull final String alias,
                          @NotNull @Unmodifiable final List<String> params) {
-        final PluginDescriptionFile description = plugin.getDescription();
+        final var meta = plugin.getPluginMeta();
 
         Msg.msg(sender,
-                "&b&lPlaceholderAPI &8- &7Help Menu &8- &7(&f" + description.getVersion() + "&7)",
+                "&b&lPlaceholderAPI &8- &7Help Menu &8- &7(&f" + meta.getVersion() + "&7)",
                 " ",
                 "&b/papi &fbcparse &9<me|--null|player name> <message>",
                 "  &7&oParse a message with placeholders and broadcast it",

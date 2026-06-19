@@ -25,12 +25,15 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import me.clip.placeholderapi.PlaceholderAPIPlugin;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 public final class Msg {
+
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
 
     public static void log(Level level, String msg, Object... args) {
         PlaceholderAPIPlugin.getInstance().getLogger().log(level, String.format(msg, args));
@@ -69,8 +72,7 @@ public final class Msg {
             return;
         }
 
-        Bukkit.broadcastMessage(
-                Arrays.stream(messages).map(Msg::color).collect(Collectors.joining("\n")));
+        Bukkit.broadcast(LEGACY.deserialize(String.join("\n", messages)));
     }
 
     public static String color(@NotNull final String text) {

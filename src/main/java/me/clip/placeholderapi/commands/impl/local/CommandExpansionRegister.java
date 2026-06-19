@@ -54,7 +54,7 @@ public final class CommandExpansionRegister extends PlaceholderCommand {
 
         final LocalExpansionManager manager = plugin.getLocalExpansionManager();
 
-        final File file = new File(manager.getExpansionsFolder(), params.get(0));
+        final File file = new File(manager.getExpansionsFolder(), params.getFirst());
         if (!file.exists() || !file.getParentFile().equals(manager.getExpansionsFolder())) {
             Msg.msg(sender,
                     "&cThe file &f" + file.getName() + "&c doesn't exist!");
@@ -80,7 +80,7 @@ public final class CommandExpansionRegister extends PlaceholderCommand {
             final Optional<PlaceholderExpansion> expansion = manager.register(clazz);
             if (!expansion.isPresent()) {
                 Msg.msg(sender,
-                        "&cFailed to register expansion from &f" + params.get(0));
+                        "&cFailed to register expansion from &f" + params.getFirst());
                 return;
             }
 
@@ -99,13 +99,13 @@ public final class CommandExpansionRegister extends PlaceholderCommand {
         }
 
         final String[] fileNames = plugin.getLocalExpansionManager().getExpansionsFolder()
-                .list((dir, name) -> name.endsWith(".jar"));
+                .list((_, name) -> name.endsWith(".jar"));
         if (fileNames == null || fileNames.length == 0) {
             return;
         }
 
         suggestByParameter(Arrays.stream(fileNames), suggestions,
-                params.isEmpty() ? null : params.get(0));
+                params.isEmpty() ? null : params.getFirst());
     }
 
 }

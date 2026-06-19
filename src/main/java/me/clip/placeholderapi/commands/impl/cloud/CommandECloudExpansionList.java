@@ -41,6 +41,7 @@ import me.clip.placeholderapi.expansion.cloud.CloudExpansion;
 import me.clip.placeholderapi.util.Format;
 import me.clip.placeholderapi.util.Msg;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -137,6 +138,10 @@ public final class CommandECloudExpansionList extends PlaceholderCommand {
                 .append("&r");
     }
 
+    @SuppressWarnings("deprecation")
+    // BuildableComponent.toBuilder() is deprecated since adventure 4.26 in favour of Component.toBuilder(),
+    // but TextComponent still extends BuildableComponent so the deprecated overload is resolved.
+    // This will resolve itself when Adventure 5.0 removes BuildableComponent.
     private static Component getMessage(@NotNull final List<CloudExpansion> expansions,
                                         final int page, final int limit, @NotNull final String target) {
         final SimpleDateFormat format = PlaceholderAPIPlugin.getDateFormat();
@@ -166,7 +171,7 @@ public final class CommandECloudExpansionList extends PlaceholderCommand {
 
             line.clickEvent(ClickEvent.suggestCommand("/papi ecloud download " + expansion.getName()));
 
-            final TextComponent.Builder hoverText = text("Click to download this expansion!", AQUA)
+            final ComponentBuilder<?, ?> hoverText = Component.text("Click to download this expansion!", AQUA)
                     .append(newline()).append(newline())
                     .append(text("Author: ", AQUA)).append(text(expansion.getAuthor(), WHITE))
                     .append(newline())
@@ -195,13 +200,13 @@ public final class CommandECloudExpansionList extends PlaceholderCommand {
         if (limit > 1) {
             message.append(newline());
 
-            final TextComponent.Builder left = text("◀", page > 1 ? GRAY : DARK_GRAY).toBuilder();
+            final ComponentBuilder<?, ?> left = Component.text("◀", page > 1 ? GRAY : DARK_GRAY).toBuilder();
 
             if (page > 1) {
                 left.clickEvent(ClickEvent.runCommand("/papi ecloud list " + target + " " + (page - 1)));
             }
 
-            final TextComponent.Builder right = text("▶", page < limit ? GRAY : DARK_GRAY).toBuilder();
+            final ComponentBuilder<?, ?> right = Component.text("▶", page < limit ? GRAY : DARK_GRAY).toBuilder();
 
             if (page < limit) {
                 right.clickEvent(ClickEvent.runCommand("/papi ecloud list " + target + " " + (page + 1)));
@@ -257,9 +262,9 @@ public final class CommandECloudExpansionList extends PlaceholderCommand {
             return;
         }
 
-        final boolean installed = params.get(0).equalsIgnoreCase("installed");
+        final boolean installed = params.getFirst().equalsIgnoreCase("installed");
         final List<CloudExpansion> expansions = Lists
-                .newArrayList(getExpansions(params.get(0), plugin));
+                .newArrayList(getExpansions(params.getFirst(), plugin));
 
         if (expansions.isEmpty()) {
             Msg.msg(sender,
@@ -273,7 +278,7 @@ public final class CommandECloudExpansionList extends PlaceholderCommand {
         if (!(sender instanceof Player) && params.size() < 2) {
             final StringBuilder builder = new StringBuilder();
 
-            addExpansionTitle(builder, params.get(0), -1);
+            addExpansionTitle(builder, params.getFirst(), -1);
             addExpansionTable(expansions,
                     builder,
                     1,
@@ -311,7 +316,7 @@ public final class CommandECloudExpansionList extends PlaceholderCommand {
         final StringBuilder builder = new StringBuilder();
         final List<CloudExpansion> values = getPage(expansions, page - 1);
 
-        addExpansionTitle(builder, params.get(0), page);
+        addExpansionTitle(builder, params.getFirst(), page);
 
         if (!(sender instanceof Player)) {
             addExpansionTable(values,
@@ -329,7 +334,7 @@ public final class CommandECloudExpansionList extends PlaceholderCommand {
 
         final int limit = (int) Math.ceil((double) expansions.size() / PAGE_SIZE);
 
-        final Component message = getMessage(values, page, limit, params.get(0));
+        final Component message = getMessage(values, page, limit, params.getFirst());
         plugin.getAdventure().player((Player) sender).sendMessage(message);
     }
 
@@ -344,12 +349,12 @@ public final class CommandECloudExpansionList extends PlaceholderCommand {
         if (params.size() <= 1) {
             suggestByParameter(
                     Sets.union(OPTIONS, plugin.getCloudExpansionManager().getCloudExpansionAuthors())
-                            .stream(), suggestions, params.isEmpty() ? null : params.get(0));
+                            .stream(), suggestions, params.isEmpty() ? null : params.getFirst());
             return;
         }
 
         suggestByParameter(IntStream.rangeClosed(1,
-                        (int) Math.ceil((double) getExpansions(params.get(0), plugin).size() / PAGE_SIZE))
+                        (int) Math.ceil((double) getExpansions(params.getFirst(), plugin).size() / PAGE_SIZE))
                 .mapToObj(Objects::toString), suggestions, params.get(1));
     }
 

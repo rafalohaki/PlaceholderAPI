@@ -296,7 +296,7 @@ public final class CloudExpansionManager {
             return file;
         }, ASYNC_EXECUTOR);
 
-        download.whenCompleteAsync((value, exception) -> {
+        download.whenCompleteAsync((_, exception) -> {
             await.remove(toIndexName(expansion));
 
             if (exception != null) {

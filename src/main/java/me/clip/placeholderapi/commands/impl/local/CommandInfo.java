@@ -48,10 +48,10 @@ public final class CommandInfo extends PlaceholderCommand {
         }
 
         final PlaceholderExpansion expansion = plugin.getLocalExpansionManager()
-                .findExpansionByIdentifier(params.get(0)).orElse(null);
+                .findExpansionByIdentifier(params.getFirst()).orElse(null);
         if (expansion == null) {
             Msg.msg(sender,
-                    "&cThere is no expansion loaded with the identifier: &f" + params.get(0));
+                    "&cThere is no expansion loaded with the identifier: &f" + params.getFirst());
             return;
         }
 
@@ -108,7 +108,7 @@ public final class CommandInfo extends PlaceholderCommand {
         }
 
         suggestByParameter(PlaceholderAPI.getRegisteredIdentifiers().stream(), suggestions,
-                params.isEmpty() ? null : params.get(0));
+                params.isEmpty() ? null : params.getFirst());
     }
 
 }

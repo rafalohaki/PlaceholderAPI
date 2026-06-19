@@ -49,10 +49,10 @@ public final class CommandExpansionUnregister extends PlaceholderCommand {
         }
 
         final Optional<PlaceholderExpansion> expansion = plugin.getLocalExpansionManager()
-                .findExpansionByName(params.get(0));
+                .findExpansionByName(params.getFirst());
         if (!expansion.isPresent()) {
             Msg.msg(sender,
-                    "&cThere is no expansion loaded with the identifier: &f" + params.get(0));
+                    "&cThere is no expansion loaded with the identifier: &f" + params.getFirst());
             return;
         }
 
@@ -72,7 +72,7 @@ public final class CommandExpansionUnregister extends PlaceholderCommand {
         }
 
         suggestByParameter(PlaceholderAPI.getRegisteredIdentifiers().stream(), suggestions,
-                params.isEmpty() ? null : params.get(0));
+                params.isEmpty() ? null : params.getFirst());
     }
 
 }

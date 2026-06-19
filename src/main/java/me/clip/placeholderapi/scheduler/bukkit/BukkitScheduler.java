@@ -82,36 +82,6 @@ public class BukkitScheduler implements TaskScheduler {
         return new BukkitScheduledTask(Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, runnable, delay, period));
     }
 
-    //Useless? Or...
-    public MyScheduledTask runTask(Plugin plugin, Runnable runnable) {
-        return new BukkitScheduledTask(Bukkit.getScheduler().runTask(plugin, runnable));
-    }
-
-    @Override
-    public MyScheduledTask runTaskLater(Plugin plugin, Runnable runnable, long delay) {
-        return new BukkitScheduledTask(Bukkit.getScheduler().runTaskLater(plugin, runnable, delay));
-    }
-
-    @Override
-    public MyScheduledTask runTaskTimer(Plugin plugin, Runnable runnable, long delay, long period) {
-        return new BukkitScheduledTask(Bukkit.getScheduler().runTaskTimer(plugin, runnable, delay, period));
-    }
-
-    @Override
-    public MyScheduledTask runTaskAsynchronously(Plugin plugin, Runnable runnable) {
-        return new BukkitScheduledTask(Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable));
-    }
-
-    @Override
-    public MyScheduledTask runTaskLaterAsynchronously(Plugin plugin, Runnable runnable, long delay) {
-        return new BukkitScheduledTask(Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, runnable, delay));
-    }
-
-    @Override
-    public MyScheduledTask runTaskTimerAsynchronously(Plugin plugin, Runnable runnable, long delay, long period) {
-        return new BukkitScheduledTask(Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, runnable, delay, period));
-    }
-
     @Override
     public void execute(Runnable runnable) {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, runnable);

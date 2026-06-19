@@ -22,7 +22,7 @@ package me.clip.placeholderapi.updatechecker;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.net.URL;
+import java.net.URI;
 import java.util.Arrays;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -50,7 +50,7 @@ public class UpdateChecker implements Listener {
     public UpdateChecker(PlaceholderAPIPlugin plugin) {
         this.plugin = plugin;
         scheduler = plugin.getScheduler();
-        pluginVersion = plugin.getDescription().getVersion();
+        pluginVersion = plugin.getPluginMeta().getVersion();
     }
 
     public boolean hasUpdateAvailable() {
@@ -64,7 +64,7 @@ public class UpdateChecker implements Listener {
     public void fetch() {
         scheduler.runTaskAsynchronously(() -> {
             try {
-                HttpsURLConnection con = (HttpsURLConnection) new URL(MODRINTH_URL).openConnection();
+                HttpsURLConnection con = (HttpsURLConnection) URI.create(MODRINTH_URL).toURL().openConnection();
                 con.setRequestMethod("GET");
                 final JsonElement json = new Gson().fromJson(new BufferedReader(new InputStreamReader(con.getInputStream())), JsonElement.class);
                 modrinthVersion = json.getAsJsonArray().get(0).getAsJsonObject().get("version_number").getAsString();

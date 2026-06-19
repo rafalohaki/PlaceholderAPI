@@ -37,10 +37,10 @@ dependencies {
     implementation("net.kyori:adventure-platform-bukkit:4.4.1")
 
     add(paper.compileOnlyConfigurationName, "net.kyori:adventure-platform-bukkit:4.4.1")
-    add(paper.compileOnlyConfigurationName, "dev.folia:folia-api:1.21.11-R0.1-SNAPSHOT")
+    add(paper.compileOnlyConfigurationName, "dev.folia:folia-api:26.1.2.build.+")
 
-    compileOnly("dev.folia:folia-api:1.21.11-R0.1-SNAPSHOT")
-    compileOnlyApi("org.jetbrains:annotations:23.0.0")
+    compileOnly("dev.folia:folia-api:26.1.2.build.+")
+    compileOnlyApi("org.jetbrains:annotations:26.0.2")
 
     jmh("org.openjdk.jmh:jmh-core:1.37")
     jmh("org.openjdk.jmh:jmh-generator-annprocess:1.37")
@@ -51,8 +51,7 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
 
     withJavadocJar()
     withSourcesJar()
@@ -76,7 +75,7 @@ tasks {
         classpath = paper.compileClasspath
         destinationDirectory.set(layout.buildDirectory.dir("classes/java/paper"))
         options.encoding = "UTF-8"
-        options.release = 8
+        options.release = 25
     }
 
     val plainJar by registering(Jar::class) {
@@ -116,7 +115,8 @@ tasks {
 
     withType<JavaCompile> {
         options.encoding = "UTF-8"
-        options.release = 8
+        options.release = 25
+        options.compilerArgs.add("-Xlint:deprecation")
     }
 
     withType<ShadowJar> {
